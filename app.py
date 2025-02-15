@@ -13,6 +13,7 @@ from pathlib import Path
 from uuid import uuid4
 from huggingface_hub import CommitScheduler
 from huggingface_hub import logging
+import requests
 
 logging.set_verbosity_debug()
 
