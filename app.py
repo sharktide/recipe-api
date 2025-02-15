@@ -3,10 +3,11 @@ import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
-from huggingface_hub import login, HfApi, Repository
+from huggingface_hub import login, HfApi
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -60,13 +61,12 @@ async def add_recipe(filename: str, recipe: Recipe):
             f.write("\n")  # Add a newline after each entry
 
         # Now push this dataset file to Hugging Face dataset repo
-        # Initialize the Repository object to manage the dataset upload
-        repo = Repository(local_dir=JSON_DATASET_DIR, clone_from=dataset_repo, use_auth_token=TOKEN)
-
-        # Add the new file to the repository and push the changes
-        repo.git_add()
-        repo.git_commit(f"Add new recipe: {filename}")
-        repo.git_push()
+        hf_api.upload_file(
+            path_or_fileobj=file_path,
+            path_in_repo=f"data/{filename}.json",
+            repo_id=dataset_repo,
+            token=TOKEN
+        )
 
         return {"message": f"Recipe '{filename}' added and pushed to Hugging Face dataset."}
     
