@@ -106,8 +106,8 @@ def status():
 @app.put("/add/recipe")
 def add_recipe(recipe: Recipe):
     # First, check if the name exists in the Hugging Face dataset
-    if check_huggingface_recipe_name(recipe.name):
-        raise HTTPException(status_code=400, detail="Recipe name already exists in the store.")
+    #if check_huggingface_recipe_name(recipe.name):
+    #    raise HTTPException(status_code=400, detail="Recipe name already exists in the store.")
     
     # Second, check if the name exists in the local cache
     if check_local_cache_recipe_name(recipe.name):
