@@ -82,7 +82,7 @@ def status():
 #         raise HTTPException(status_code=500, detail=f"Error writing file: {str(e)}")
 
 @app.put("/add/beta")
-def save_json(filename: str, recipe: Recipe) -> None:
+def save_json(filename: str, recipe: Recipe):
     # Save the data to the JSON file
     with JSON_DATASET_PATH.open("a") as f:
         # Writing the recipe details (name, ingredients, instructions) to the JSON file
@@ -92,6 +92,7 @@ def save_json(filename: str, recipe: Recipe) -> None:
             "instructions": recipe.instructions
         }, f)
         f.write("\n")
+    return {"Status": "Added to cache"}
 
         
     
