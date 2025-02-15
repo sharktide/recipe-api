@@ -36,6 +36,10 @@ if not os.path.exists(DATASET_PATH):
 # Authentication for Hugging Face
 login(token=TOKEN)
 
+@app.get("/status")
+def status():
+    return {"status": "200"}
+
 @app.put("/add/recipe")
 async def add_recipe(filename: str, recipe: Recipe):
     # Define the file path based on the filename query parameter
