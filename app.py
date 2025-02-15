@@ -12,6 +12,9 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 from huggingface_hub import CommitScheduler
+from huggingface_hub import logging
+
+logging.set_verbosity_debug()
 
 
 # Initialize FastAPI
@@ -59,35 +62,10 @@ scheduler = CommitScheduler(
 def status():
     return {"status": "200"}
 
-# @app.put("/add/recipe")
-# async def add_recipe(filename: str, recipe: Recipe):
-#     # Define the file path based on the filename query parameter
-#     file_path = os.path.join(DATASET_PATH, f"{filename}.json")
 
-#     # Check if the file already exists
-#     if os.path.exists(file_path):
-#         raise HTTPException(status_code=400, detail="File already exists")
-
-#     # Prepare the data to be written in JSON format
-#     recipe_data = recipe.dict()  # Convert Recipe model to dictionary
-
-#     # Write the data to the new file
-#     try:
-#         with open(file_path, "w") as f:
-#             json.dump(recipe_data, f, indent=4)
-        
-#         dataset = Dataset.from_json(file_path)  # Load the new file
-#         dataset.push_to_hub("sharktide/recipes")  # Push the dataset to the Hugging Face Hub
-        
-#         return {"message": f"Recipe '{filename}' added successfully."}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error writing file: {str(e)}")
-
-@app.put("/add/beta")
+@app.put("/add/recipe")
 def save_json(filename: str, recipe: Recipe):
-    # Save the data to the JSON file
     with JSON_DATASET_PATH.open("a") as f:
-        # Writing the recipe details (name, ingredients, instructions) to the JSON file
         json.dump({
             "name": recipe.name,
             "ingredients": recipe.ingredients,
@@ -98,4 +76,3 @@ def save_json(filename: str, recipe: Recipe):
 
         
     
-    # Commit and push the changes to the dataset
