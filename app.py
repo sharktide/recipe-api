@@ -1,14 +1,13 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 import json
 import os
-from datasets import Dataset, DatasetDict
-from huggingface_hub import login, HfApi
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 from typing import List
-from fastapi.responses import JSONResponse
+from huggingface_hub import login, HfApi
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
-# Initialize FastAPI
+# Initialize FastAPI app
 app = FastAPI()
 
 app.add_middleware(
@@ -19,66 +18,54 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Get Hugging Face token from environment variable
-TOKEN = os.getenv("token")  # Make sure to set HF_TOKEN environment variable
-
-# Ensure the token is available
+# Token for Hugging Face (using the token environment variable as 'token')
+TOKEN = os.getenv("token")
 if not TOKEN:
-    raise ValueError("HF_TOKEN environment variable is missing.")
+    raise ValueError("The 'token' environment variable is missing.")
 
-# Authentication for Hugging Face
+# Authenticate with Hugging Face Hub
 login(token=TOKEN)
 
-# Define the data folder and recipe model
-DATASET_PATH = "/app/data"
+# Hugging Face API for dataset handling
+hf_api = HfApi()
 
-if not os.path.exists(DATASET_PATH):
-    os.makedirs(DATASET_PATH)
+# Define the folder for storing the dataset locally
+JSON_DATASET_DIR = "json_dataset"
+os.makedirs(JSON_DATASET_DIR, exist_ok=True)
 
+# Dataset info (to be used when pushing to Hugging Face Hub)
+dataset_repo = "sharktide/recipes"  # Change to your repo name on Hugging Face Hub
+DATASET_PATH = os.path.join(JSON_DATASET_DIR, "data")
+
+# Define the Recipe model
 class Recipe(BaseModel):
     ingredients: List[str]
     instructions: str
 
-# Function to load the existing dataset or create a new one
-def load_or_create_dataset():
-    dataset_files = [f for f in os.listdir(DATASET_PATH) if f.endswith(".json")]
-    all_recipes = []
-
-    for file_name in dataset_files:
-        file_path = os.path.join(DATASET_PATH, file_name)
-        with open(file_path, "r") as f:
-            recipe_data = json.load(f)
-            all_recipes.append(recipe_data)
-
-    return Dataset.from_dict({"data": all_recipes}) if all_recipes else None
-
 @app.put("/add/recipe")
 async def add_recipe(filename: str, recipe: Recipe):
-    # Define the file path based on the filename query parameter
-    file_path = os.path.join(DATASET_PATH, f"{filename}.json")
-
-    # Check if the file already exists
-    if os.path.exists(file_path):
-        raise HTTPException(status_code=400, detail="File already exists")
-
-    # Prepare the data to be written in JSON format
-    recipe_data = recipe.dict()  # Convert Recipe model to dictionary
-
-    # Write the data to the new file as JSON
+    # Define the file path for saving the recipe in JSON format
+    file_path = os.path.join(JSON_DATASET_DIR, f"{filename}.json")
+    
+    # Prepare the data to be saved
+    recipe_data = recipe.dict()
+    recipe_data["datetime"] = datetime.now().isoformat()  # Add timestamp to the entry
+    
+    # Save the recipe to the JSON file
     try:
-        with open(file_path, "w") as f:
-            json.dump(recipe_data, f, indent=4)
+        with open(file_path, "a") as f:
+            json.dump(recipe_data, f)
+            f.write("\n")  # Add a newline after each entry
+        
+        # Push the updated data directly to the Hugging Face dataset repo
+        hf_api.dataset_push_to_hub(
+            repo_id=dataset_repo, 
+            path_in_repo="data", 
+            folder_path=JSON_DATASET_DIR
+        )
 
-        # Load the updated dataset
-        dataset = load_or_create_dataset()
-
-        # If dataset does not exist, initialize a new one
-        if not dataset:
-            dataset = Dataset.from_dict({"data": [recipe_data]})
-
-        # Push the updated dataset to the Hugging Face Hub
-        dataset.push_to_hub("sharktide/recipes")
-
-        return {"message": f"Recipe '{filename}' added successfully."}
+        return {"message": f"Recipe '{filename}' added and pushed to Hugging Face dataset."}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error writing file: {str(e)}")
+
