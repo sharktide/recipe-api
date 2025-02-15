@@ -2,3 +2,5 @@ fastapi
 uvicorn
 datasets
 huggingface-hub
+git+https://github.com/huggingface/huggingface_hub
+pyarrow
