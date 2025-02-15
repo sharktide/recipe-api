@@ -26,7 +26,7 @@ class Recipe(BaseModel):
     ingredients: List[str]
     instructions: str
 
-DATASET_PATH = "/mnt/data/sharktide/recipes/data"
+DATASET_PATH = "/app/data"
 
 # Ensure the 'data' folder exists
 if not os.path.exists(DATASET_PATH):
