@@ -23,6 +23,7 @@ TOKEN = os.getenv("token")
 
 
 class Recipe(BaseModel):
+    name: str
     ingredients: List[str]
     instructions: str
 
