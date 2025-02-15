@@ -58,21 +58,73 @@ scheduler = CommitScheduler(
     path_in_repo="data",
 )
 
+def check_huggingface_recipe_name(name: str) -> bool:
+    url = "https://datasets-server.huggingface.co/rows?dataset=sharktide%2Frecipes&config=default&split=train"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        # Extract all the recipe names in the dataset
+        existing_names = [row['row']['name'] for row in data['rows']]
+        return name in existing_names
+    else:
+        raise HTTPException(status_code=500, detail="Error accessing store")
+
+
+def check_local_cache_recipe_name(name: str) -> bool:
+    for file in os.listdir(JSON_DATASET_DIR):
+        file_path = JSON_DATASET_DIR / file
+        if file_path.suffix == ".json":
+            with open(file_path, "r") as f:
+                for line in f:
+                    try:
+                        recipe_data = json.loads(line)
+                        if recipe_data['name'] == name:
+                            return True
+                    except json.JSONDecodeError:
+                        continue
+    return False
+
+
 @app.get("/status")
 def status():
     return {"status": "200"}
 
 
+# @app.put("/add/recipe")
+# def save_json(filename: str, recipe: Recipe):
+#     with JSON_DATASET_PATH.open("a") as f:
+#         json.dump({
+#             "name": recipe.name,
+#             "ingredients": recipe.ingredients,
+#             "instructions": recipe.instructions
+#         }, f)
+#         f.write("\n")
+#     return {"Status": "Added to cache"}
+
 @app.put("/add/recipe")
-def save_json(filename: str, recipe: Recipe):
-    with JSON_DATASET_PATH.open("a") as f:
-        json.dump({
-            "name": recipe.name,
-            "ingredients": recipe.ingredients,
-            "instructions": recipe.instructions
-        }, f)
-        f.write("\n")
-    return {"Status": "Added to cache"}
+def add_recipe(recipe: Recipe):
+    # First, check if the name exists in the Hugging Face dataset
+    if check_huggingface_recipe_name(recipe.name):
+        raise HTTPException(status_code=400, detail="Recipe name already exists in the store.")
+    
+    # Second, check if the name exists in the local cache
+    if check_local_cache_recipe_name(recipe.name):
+        raise HTTPException(status_code=400, detail="Recipe name already exists in the local cache.")
+    
+    # If both checks pass, save the recipe to the cache
+    try:
+        with JSON_DATASET_PATH.open("a") as f:
+            json.dump({
+                "name": recipe.name,
+                "ingredients": recipe.ingredients,
+                "instructions": recipe.instructions
+            }, f)
+            f.write("\n")
+        return {"Status": "Recipe added successfully."}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving recipe: {str(e)}")
 
         
     
