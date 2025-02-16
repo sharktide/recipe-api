@@ -105,7 +105,7 @@ def add_recipe(recipe: Recipe):
             json.dump({
                 "name": recipe.name,
                 "time": recipe.time,
-                "creator": recipe.creator
+                "creator": recipe.creator,
                 "ingredients": recipe.ingredients,
                 "instructions": recipe.instructions
             }, f)
