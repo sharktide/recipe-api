@@ -65,7 +65,6 @@ def check_huggingface_recipe_name(name: str) -> bool:
         existing_names = [row['row']['name'] for row in data['rows']]
         return name in existing_names
     if response.status_code == 404:
-        warnings.Warn("Dataset is empty, or unreachable")
         return False
     else:
         raise HTTPException(status_code=500, detail="Error accessing store")
