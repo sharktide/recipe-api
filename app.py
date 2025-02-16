@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 import requests
-import warnings
 
 logging.set_verbosity_debug()
 
@@ -32,6 +31,8 @@ TOKEN = os.getenv("token")
 
 class Recipe(BaseModel):
     name: str
+    time: str
+    creator: str
     ingredients: List[str]
     instructions: str
 
