@@ -33,6 +33,7 @@ class Recipe(BaseModel):
     name: str
     time: str
     creator: str
+    description: str
     ingredients: List[str]
     instructions: str
 
@@ -106,6 +107,7 @@ def add_recipe(recipe: Recipe):
                 "name": recipe.name,
                 "time": recipe.time,
                 "creator": recipe.creator,
+                "description": recipe.description,
                 "ingredients": recipe.ingredients,
                 "instructions": recipe.instructions
             }, f)
