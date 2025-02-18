@@ -58,7 +58,7 @@ scheduler = CommitScheduler(
 )
 
 def check_huggingface_recipe_name(name: str) -> bool:
-    url = "https://datasets-server.huggingface.co/rows?dataset=sharktide%2Frecipes&config=default&split=train"
+    url = "https://datasets-server.huggingface.co/first-rows?dataset=sharktide%2Frecipes&config=default&split=train"
     response = requests.get(url)
     
     if response.status_code == 200:
